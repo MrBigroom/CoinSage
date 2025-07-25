@@ -1,15 +1,20 @@
 import { NavigationContainer } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createStackNavigator } from "@react-navigation/native";
+import LoginScreen from "./screens/Auth/LoginScreen";
+import SignupScreen from "./screens/Auth/SignupScreen";
+import Dashboard from "./screens/Dashboard";
+import { HeaderShownContext } from "@react-navigation/elements";
 
-const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
 export default function App() {
     return (
         <NavigationContainer>
-            <Tab.Navigator>
-                <Tab.Screen name="Transactions" component={TransactionsScreen} />
-                <Tab.Screen name="Dashboard" component={DashboardScreen}/>
-            </Tab.Navigator>
+            <Stack.Navigator initialRouteName="Login" screenOptions={{ HeaderShown: false }}>
+                <Stack.Screen name="Login" component={LoginScreen} />
+                <Stack.Screen name="Signup" component={SignupScreen} />
+                <Stack.Screen name="Dashboard" component={Dashboard} />
+            </Stack.Navigator>
         </NavigationContainer>
-    );
+    )
 }
