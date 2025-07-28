@@ -1,6 +1,8 @@
 import React from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Formik } from "formik";
 import * as Yup from 'yup';
 import styles from './AuthStyles';
@@ -28,7 +30,8 @@ const SignupScreen = () => {
 
     const handleSignup = async(values) => {
         try{
-            console.log('Signup data: ', values);
+            const response = await axios.post('http://../auth/signup', values);
+            await AsyncStorage.setItem('token', response.data.token);
             Alert.alert('Success', 'Account created!');
             navigation.navigate('Login');
         } catch(error) {
@@ -95,8 +98,13 @@ const SignupScreen = () => {
                         <Text style={{ color: 'red', fontSize: 12 }}>{errors.confirmPassword}</Text>
                     )}
 
-                    <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-                        <Text style={styles.buttonText}>Sign Up</Text>
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={handleSubmit}
+                        disabled={Formik.isSubmitting}>
+                        <Text style={styles.buttonText}>
+                            {Formik.isSubmitting ? 'Signing up...' : 'Sign Up'}
+                        </Text>
                     </TouchableOpacity>
                     </>
                 )} 
