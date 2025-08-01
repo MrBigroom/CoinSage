@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, SectionList, TouchableOpacity } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { RollInLeft, runOnJS, useSharedValue } from 'react-native-reanimated';
+import Animated, { runOnJS } from 'react-native-reanimated';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import TransactionItem from './TransactionItem';
 import AddTransactionModel from './AddTransactionModel';
@@ -159,3 +159,5 @@ const SwipeableRow = ({ item, onDelete, onEdit, swipedId, setSwipedId }) => {
             </GestureDetector>
         );
 };
+
+export default TransactionsScreen;
