@@ -1,5 +1,7 @@
 import { useSelector } from "react-redux";
 import { NavigationContainer, createStackNavigator } from "@react-navigation/native";
+import 'react-native-gesture-handler';
+import 'react-native-reanimated';
 import LoginScreen from "./screens/Auth/LoginScreen";
 import SignupScreen from "./screens/Auth/SignupScreen";
 import Dashboard from "./screens/Dashboard";
