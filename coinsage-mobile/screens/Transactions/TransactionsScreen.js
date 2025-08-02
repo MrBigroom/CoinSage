@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import TransactionItem from './TransactionItem';
 import AddTransactionModel from './AddTransactionModel';
 import styles from './TransactionsStyles';
+import api from '../../services/api';
 
 const TransactionsScreen = () => {
     const [transactions, setTransactions] = useState([]);
@@ -14,10 +15,15 @@ const TransactionsScreen = () => {
     const [swipedId, setSwipedId] = useState(null);
 
     useEffect(() => {
-        setTransactions([
-            { id: '1', amount: -50, category: 'Food', date: '2025-10-01', description: 'Lunch'},
-            { id: '2', amount: 2000, category: 'Salary', date: '2025-10-01'},
-        ]);
+        const fetchTransactions = async () => {
+            try {
+                const response = await api.get('/transactions');
+                setTransactions(response.data);
+            } catch(error) {
+                console.log('Failed to fetch transactions: ', error);
+            }
+        };
+        fetchTransactions();
     }, []);
 
     const filteredTransactions = transactions.filter(t => 
