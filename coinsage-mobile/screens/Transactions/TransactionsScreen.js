@@ -6,24 +6,27 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import TransactionItem from './TransactionItem';
 import AddTransactionModel from './AddTransactionModel';
 import styles from './TransactionsStyles';
-import api from '../../services/api';
+import api, { deleteTransaction, getTransaction, getTransactions } from '../../src/services/api';
 
 const TransactionsScreen = () => {
     const [transactions, setTransactions] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [isModelVisible, setModelVisible] = useState(false);
     const [filter, setFilter] = useState('all');
     const [swipedId, setSwipedId] = useState(null);
 
     useEffect(() => {
-        const fetchTransactions = async () => {
+        const loadData = async () => {
             try {
-                const response = await api.get('/transactions');
-                setTransactions(response.data);
+                const { data } = await getTransactions();
+                setTransactions(data);
             } catch(error) {
                 console.log('Failed to fetch transactions: ', error);
+            } finally {
+                setLoading(false);
             }
         };
-        fetchTransactions();
+        loadData();
     }, []);
 
     const filteredTransactions = transactions.filter(t => 
@@ -47,8 +50,13 @@ const TransactionsScreen = () => {
         }));
     };
 
-    const handleDelete = (id) => {
-        setTransactions(prev => prev.filter(t => t.id !== id));
+    const handleDelete = async (id) => {
+        try {
+            await deleteTransaction(id);
+            setTransactions(prev => prev.filter(t => t.id !== id));
+        } catch (error) {
+            console.error('Delete failed: ', error);
+        }
     };
 
     const handleEdit = (id) => {

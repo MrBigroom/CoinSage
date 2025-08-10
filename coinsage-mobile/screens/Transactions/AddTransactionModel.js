@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet } from 'reac
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { addTransaction } from '../../src/services/api';
 
 const validationSchema = Yup.object().shape({
     amount: Yup.number().required('Amount is required').positive('Must be positive'),
@@ -12,14 +13,18 @@ const validationSchema = Yup.object().shape({
 const AddTransactionModel = ({ visible, onClose }) => {
     const [isIncome, setIsIncome] = useState(false);
 
-    const handleSubmit = (values) => {
-        const transaction = {
-            ...values,
-            amount: isIncome ? values.amount : -values.amount,
-            date: new Date().toISOString(),
-        };
-        console.log('New transaction added: ', transaction);
-        onClose();
+    const handleSubmit = async (values) => {
+        try {
+            await addTransaction({
+                amount: values.amount,
+                category: values.category,
+                description: values.description,
+                date: new Date().toISOString(),
+            });
+            onClose();
+        } catch (error) {
+            console.log('Failed to add transaction: ', error);
+        }
     };
 
     return (
