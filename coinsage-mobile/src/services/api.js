@@ -13,4 +13,20 @@ api.interceptors.request.use(async (config) => {
     return config;
 });
 
+export const login = (email, password) =>
+    api.post('/auth/login', { email, password });
+
+export const signup = (username, email, password) =>
+    api.post('/auth/signup', { username, email, password });
+
+export const getTransaction = () => api.get('/transactions');
+export const addTransaction = (transaction) =>
+    api.post('/transactions', transaction);
+export const deleteTransaction = (id) =>
+    api.delete(`/transactions/${id}`);
+
+export const getBudgets = () => api.get('/budgets');
+export const updateBudget = (budget) =>
+    api.post('/budgets', budget);
+
 export default api;
