@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Formik } from "formik";
 import * as Yup from 'yup';
 import styles from './AuthStyles';
+import { signup } from '../../src/services/api';
 
 const SignupSchema = Yup.object().shape({
     username: Yup.string()
@@ -30,12 +31,11 @@ const SignupScreen = () => {
 
     const handleSignup = async(values) => {
         try{
-            const response = await axios.post('http://../auth/signup', values);
-            await AsyncStorage.setItem('token', response.data.token);
-            Alert.alert('Success', 'Account created!');
+            await signup(values.name, values.email, values.password);
+            Alert.alert('Success', 'Account created! You can proceed to login');
             navigation.navigate('Login');
         } catch(error) {
-            Alert.alert('Error', error.response?.data?.message || 'Signup failed');
+            Alert.alert('Signup failed', error.response?.data?.message || 'Signup failed');
         }
     };
 
