@@ -71,4 +71,36 @@ export default StyleSheet.create({
         alignItems: 'center',
         elevation: 5,
     },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#666',
+    },
+    filterButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 15,
+    },
+    activeFilterButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 15,
+        backgroundColor: '#6C63FF',
+    },
+    filterText: {
+        color: '#666',
+    },
+    activeFilterText: {
+        color: 'white',
+    },
 });

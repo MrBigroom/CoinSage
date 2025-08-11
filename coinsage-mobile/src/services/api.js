@@ -24,6 +24,8 @@ export const addTransaction = (transaction) =>
     api.post('/transactions', transaction);
 export const deleteTransaction = (id) =>
     api.delete(`/transactions/${id}`);
+export const updateTransaction = (id, updates) =>
+    api.patch(`/transactions/${id}`, updates);
 
 export const getBudgets = () => api.get('/budgets');
 export const updateBudget = (budget) =>

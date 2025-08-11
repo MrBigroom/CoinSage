@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, SectionList, TouchableOpacity } from 'react-native';
+import { View, Text, SectionList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { runOnJS } from 'react-native-reanimated';
+import Animated, { runOnJS, useSharedValue } from 'react-native-reanimated';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import TransactionItem from './TransactionItem';
 import AddTransactionModel from './AddTransactionModel';
 import styles from './TransactionsStyles';
-import api, { deleteTransaction, getTransaction, getTransactions } from '../../src/services/api';
+import { getTransactions, deleteTransaction, updateTransaction  } from '../../src/services/api';
+import { ref } from "yup";
 
 const TransactionsScreen = () => {
     const [transactions, setTransactions] = useState([]);
@@ -14,20 +15,53 @@ const TransactionsScreen = () => {
     const [isModelVisible, setModelVisible] = useState(false);
     const [filter, setFilter] = useState('all');
     const [swipedId, setSwipedId] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const { data } = await getTransactions();
-                setTransactions(data);
-            } catch(error) {
-                console.log('Failed to fetch transactions: ', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadData();
+    const fetchTransactions = async () => {
+        try {
+            const { data } = await getTransactions();
+            setTransactions(data);
+        } catch (error) {
+            console.log('Failed to fetch transactions: ', error);
+            Alert.alert('Error', 'Failed to fetch transactions');
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    useEffect(() => {  
+        fetchTransactions();
     }, []);
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        fetchTransactions();
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await deleteTransaction(id);
+            setTransactions(prev => prev.filter(t => t.id !== id));
+            setSwipedId(null);
+        } catch (error) {
+            console.error('Delete failed: ', error);
+            Alert.alert('Error', 'Failed to delete transaction');
+        }
+    };
+
+    const handleEdit = async (id, updates) => {
+        try {
+            const { data: updatedTransaction } = await updateTransaction(id, updates);
+            setTransactions(prev => 
+                prev.map(t => t._id === id ? updatedTransaction : t)
+            );
+            setSwipedId(null);
+        } catch (error) {
+            console.error('Update failed: ', error);
+            Alert.alert('Error', 'Failed to update transaction');
+        }
+    };
 
     const filteredTransactions = transactions.filter(t => 
         filter === 'all' || (filter === 'income' ? t.amount > 0 : t.amount < 0)
@@ -50,17 +84,82 @@ const TransactionsScreen = () => {
         }));
     };
 
-    const handleDelete = async (id) => {
-        try {
-            await deleteTransaction(id);
-            setTransactions(prev => prev.filter(t => t.id !== id));
-        } catch (error) {
-            console.error('Delete failed: ', error);
-        }
-    };
+    if(loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#6C63FF" />
+            </View>
+        );
+    }
 
-    const handleEdit = (id) => {
-        console.log('Editing transaction: ', id);
+    const SwipeableRow = ({ item }) => {
+        const translateX = Animated.useSharedValue(0);
+        const isActive = swipedId === item._id;
+
+        const panGesture = Gesture.Pan()
+            .activeOffsetX([-10, 10])
+            .onUpdate((e) => {
+                if(isActive) {
+                    return;
+                }
+                if(Math.abs(e.translationX) > 20) {
+                    translateX.value = e.translationX;
+                }
+            })
+            .onEnd((e) => {
+                if(Math.abs(e.translationX) > 100) {
+                    runOnJS(setSwipedId)(item._id);
+                    translateX.value = e.translationX > 0 ? 120 : -120;
+                } else {
+                    translateX.value = 0;
+                }
+            });
+        
+        const tapGesture = Gesture.Tap()
+            .onEnd(() => {
+                if(isActive) {
+                    translateX.value = 0;
+                    runOnJS(setSwipedId)(null);
+                }
+            });
+
+        const composedGesture = Gesture.Simultaneous(panGesture, tapGesture);
+
+        return (
+            <GestureDetector gesture={composedGesture}>
+                <Animated.View style={{ flexDirection: 'row' }}>
+                    {}
+                    {isActive && (
+                        <View style={styles.swipeActions}>
+                            <TouchableOpacity
+                                style={styles.editButton}
+                                onPress={() => {
+                                    translateX.value = 0;
+                                    handleEdit(item._id, {
+                                        amount: item.amount,
+                                        category: item.category + " (updated)",
+                                        description: item.description
+                                    });
+                                }}>
+                                <Icon name="edit" size={20} color="white" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.deleteButton}
+                                onPress={() => {
+                                    translateX.value = 0;
+                                    handleDelete(item._id);
+                                }}>
+                                <Icon name="delete" size={20} color="white" />
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
+                    <Animated.View style={[styles.swipeContent, { transform: [{ translateX }] }]}>
+                        <TransactionItem transaction={item} />
+                    </Animated.View>
+                </Animated.View>
+            </GestureDetector>
+        );
     };
 
 
@@ -81,18 +180,20 @@ const TransactionsScreen = () => {
 
             <SectionList
                 sections={groupedTransactions}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item._id}
                 renderItem={({ item }) => (
-                    <SwipeableRow
-                        item={item}
-                        onDelete={handleDelete}
-                        onEdit={handleEdit}
-                        swipedId={swipedId}
-                        setSwipedId={setSwipedId}/>
+                    <SwipeableRow item={item} />
                 )}
                 renderSectionHeader={({ section }) => (
                     <Text style={styles.sectionHeader}>{section.title}</Text>
                 )}
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>No transactions found</Text>
+                    </View>
+                }
             />
 
             <TouchableOpacity style={styles.addButton} onPress={() => setModelVisible(true)}>
@@ -104,9 +205,10 @@ const TransactionsScreen = () => {
     );
 };
 
+/*
 const SwipeableRow = ({ item, onDelete, onEdit, swipedId, setSwipedId }) => {
     const translateX = Animated.useSharedValue(0);
-    const isActive = swipedId === item.id;
+    const isActive = swipedId === item._id;
 
     const panGesture = Gesture.Pan()
         .activeOffsetX([-10, 10])
@@ -145,9 +247,10 @@ const SwipeableRow = ({ item, onDelete, onEdit, swipedId, setSwipedId }) => {
                             <TouchableOpacity
                                 style={styles.editButton}
                                 onPress={() => {
-                                    translateX.value = 0;
-                                    onEdit(item.id);
-                                    setSwipedId(null);
+                                    handleEdit(item._id, {
+                                        amount: -50,
+                                        category: 'Updated category',
+                                    });
                                 }}>
                                 <Icon name="edit" size={20} color='white' />
                             </TouchableOpacity>
@@ -173,5 +276,6 @@ const SwipeableRow = ({ item, onDelete, onEdit, swipedId, setSwipedId }) => {
             </GestureDetector>
         );
 };
+*/
 
 export default TransactionsScreen;
