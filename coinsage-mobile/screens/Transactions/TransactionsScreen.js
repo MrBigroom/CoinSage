@@ -6,7 +6,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import TransactionItem from './TransactionItem';
 import AddTransactionModel from './AddTransactionModel';
 import styles from './TransactionsStyles';
-import { getTransactions, deleteTransaction, updateTransaction  } from '../../src/services/api';
+import { getTransactions, deleteTransaction, updateTransaction } from '../../src/services/api';
 
 const TransactionsScreen = () => {
     const [transactions, setTransactions] = useState([]);

@@ -5,6 +5,7 @@ import 'react-native-reanimated';
 import LoginScreen from "./screens/Auth/LoginScreen";
 import SignupScreen from "./screens/Auth/SignupScreen";
 import Dashboard from "./screens/Dashboard";
+import TransactionsScreen from "./screens/Transactions/TransactionsScreen";
 
 const Stack = createStackNavigator();
 
